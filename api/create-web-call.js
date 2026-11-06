@@ -58,17 +58,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Try the v2 endpoint first, fall back to v3 if it isn't available.
-    let r = await createCall("/v2/create-web-call", apiKey, agentId);
-    if (r.status === 404) {
-      r = await createCall("/v3/create-web-call", apiKey, agentId);
-    }
-
-    const data = await r.json().catch(() => ({}));
+    // Current endpoint is v3; fall back to v2 for older accounts.
+    let r = await createCall("/v3/create-web-call", apiKey, agentId);
+    let data = await r.json().catch(() => ({}));
 
     if (!r.ok || !data.access_token) {
-      console.error("Retell create-web-call failed", r.status, data);
-      return res.status(502).json({ error: "Could not start the call. Please try again." });
+      console.error("Retell v3 create-web-call failed", r.status, data);
+      const r2 = await createCall("/v2/create-web-call", apiKey, agentId);
+      const data2 = await r2.json().catch(() => ({}));
+      if (r2.ok && data2.access_token) {
+        r = r2;
+        data = data2;
+      } else {
+        console.error("Retell v2 create-web-call failed", r2.status, data2);
+        const reason =
+          r.status === 401 || r2.status === 401
+            ? "Retell rejected the API key. Check RETELL_API_KEY in Vercel."
+            : "Could not start the call. Please try again.";
+        return res.status(502).json({
+          error: reason,
+          retell_status: [r.status, r2.status],
+          retell_message: String(data.message || data.error || data2.message || data2.error || "").slice(0, 200),
+        });
+      }
     }
 
     return res.status(200).json({
