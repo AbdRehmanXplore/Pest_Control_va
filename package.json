@@ -1,0 +1,10 @@
+{
+  "name": "pest-control-va",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live web demo of Emma, the AI receptionist for Alternative Pest & Termite Control (Retell AI).",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
