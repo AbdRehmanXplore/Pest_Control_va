@@ -83,9 +83,14 @@ export default async function handler(req, res) {
       }
     }
 
+    // Pass along everything the browser SDK needs to connect (transport type,
+    // ICE/TURN servers, etc.). These are short-lived, call-scoped values.
     return res.status(200).json({
       access_token: data.access_token,
       call_id: data.call_id,
+      transport: data.transport,
+      url: data.url,
+      ice_servers: data.ice_servers,
     });
   } catch (err) {
     console.error("Retell create-web-call error", err);

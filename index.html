@@ -218,7 +218,7 @@
   </footer>
 
   <script type="module">
-    import { RetellWebClient } from "https://esm.sh/retell-client-js-sdk@2";
+    import { RetellWebClient } from "https://esm.sh/retell-client-js-sdk@3.0.4";
 
     const client = new RetellWebClient();
     const btn = document.getElementById("callBtn");
@@ -277,7 +277,7 @@
     client.on("agent_stop_talking", () => avatar.classList.remove("talking"));
 
     client.on("error", (err) => {
-      console.error(err);
+      console.error("Retell error:", err);
       try { client.stopCall(); } catch (_) {}
       setIdle();
       setStatus("Something went wrong. Please try again.", "err");
@@ -309,7 +309,12 @@
         if (!res.ok || !data.access_token) {
           throw new Error(data.error || "Could not start the call.");
         }
-        await client.startCall({ accessToken: data.access_token });
+        const config = { accessToken: data.access_token };
+        if (data.call_id) config.callId = data.call_id;
+        if (data.transport) config.transport = data.transport;
+        if (data.url) config.url = data.url;
+        if (Array.isArray(data.ice_servers)) config.iceServers = data.ice_servers;
+        await client.startCall(config);
       } catch (e) {
         console.error(e);
         setIdle();
